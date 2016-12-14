@@ -37,7 +37,7 @@ sys	0m0.007s
 >Note: [`time`](https://linux.die.net/man/1/time) is a linux utility that can provide the time required to execute the command.
 
 ![Image of req flow landing page]
-(images/req_flow.jpeg)
+(images/req_flow.png)
 
 <a name='components'></a>
 ### How to find the point of delay in request flow
@@ -66,19 +66,18 @@ app1.app_domain.com - [14/12/2016:00:31:32.348 +0000] "GET /hello HTTP/1.1" 200 
 
 Above information suggests that application is taking long time to process the request. To investigate this line of thought further we recommend adding additional logs in application.
 
-#### Signs to look out for when delay is caused by application
+#### Signs to look out for when delay is not caused by gorouter
 
   1. Network delay from specific application or specific instance of an application only.
-  1. Network delay from set of applications.
+  1. Network delay from a subset of applications.
     - Check the network between cell(on which delayed applications are deployed) and gorouter.
 
-1. Delay caused by router.
+####1. Delay caused by router.
 
 Let's consider the access log for the request and corresponding application logs
 ```
-app1.app_domain.com - [14/12/2016:00:31:32.348 +0000] "GET /hello HTTP/1.1" 200 0 60 "-" "HTTPClient/1.0 (2.7.1, ruby 2.3.3 (2016-11-21))" "10.0.4.207:20810" "10.0.48.67:61555" x_forwarded_for:"52.3.107.171" x_forwarded_proto:"http" vcap_request_id:"01144146-1e7a-4c77-77ab-49ae3e286fe9" response_time:0.211734 app_id:"13ee085e-bdf5-4a48-aaaf-e854a8a975df" app_index:"0" x_b3_traceid:"3595985e7c34536a" x_b3_spanid:"3595985e7c34536a" x_b3_parentspanid:"-"
-
-app1 received req at [14/12/2016:00:32:32.348 +0000]
+app1.app_domain.com - [14/12/2016:00:31:32.348 +0000] "GET /hello HTTP/1.1" 200 0 60 "-" "HTTPClient/1.0 (2.7.1, ruby 2.3.3 (2016-11-21))" "10.0.4.207:20810" "10.0.48.67:61555" x_forwarded_for:"52.3.107.171" x_forwarded_proto:"http" vcap_request_id:"01144146-1e7a-4c77-77ab-49ae3e286fe9" response_time:0.211734 app_id:"13ee085e-bdf5-4a48-aaaf-e854a8a975df" > app_index:"0" x_b3_traceid:"3595985e7c34536a" x_b3_spanid:"3595985e7c34536a" x_b3_parentspanid:"-"
+app1 received request at [14/12/2016:00:32:32.348 +0000]
 app1 finished processing req at [14/12/2016:00:32:32.500 +0000]
 ```
 
@@ -88,27 +87,31 @@ Let get a timeline from these logs:
 - application finished processing at: [14/12/2016:00:32:32.500 +0000]
 - gorouter finished proccessing request at : [14/12/2016:00:32:32.510 +0000]
 
-Gorouter took close to 60 sec to send the req to router. How can I check if something is not right with gorouter?
- - Metrics is a good way to monitor the health of router. 
-    - CPU utilization
-    - Latency
-    - number of request/sec
+Gorouter took close to 60 sec to send the request to router. Let's accumulate further proof by SSH'ing into a router and run the following diagnostics.
 
-To accumulate further proof, lets SSH into the router and run the following diagnostics.
-- use `curl` to connect to the endpoint through gorouter (this avoid the LB, client network hop)
+1. Use `curl` to connect to the endpoint through gorouter (this avoid the LB, client network hop)
 `time curl -H "Host: app1.app_domain.com" http://IP_GOROUTER_VM:80"`
-- Use [status endpoint](https://github.com/cloudfoundry/gorouter/tree/master#the-routing-table) to fetch the backend IP and port of application and run command `time curl http://APPLICATION_IP:APP_PORT"`. This will give us the time for contacting the application directly (avoiding gorouter proxy). 
+
+1. Use [status endpoint](https://github.com/cloudfoundry/gorouter/tree/master#the-routing-table) to fetch the backend IP and port of application and run command 
+`time curl http://APPLICATION_IP:APP_PORT"`. This will give us the time for contacting the application directly (avoiding gorouter proxy). 
 
 Use this information to deduce one of the following
 - Overall network delay between gorouter and cells
 - Gorouter is under heavy load so it takes long time to process requests.
+
+### REMOVE: Obviously there is no other scenario because nothing is ever wrong with gorouter !!
 
 #### Signs to look out for when delay is caused by gorouter
 
 1. Routers are under heavy load.
 1. Huge network delay within the IAAS. Monitor IAAS specific metrics.
 1. There is an application which takes long time to process requests. This can result in the spike of go routines in router.
+1. Metrics is a good way to monitor the health of router. 
+    - CPU utilization
+    - Latency
+    - number of request/sec
 
+## REMOVE: If you are seeing the above behavior, now would be a great time call in the big guns(yes the support team) ;)
 
 <a name='tips'></a>
 #### Tips/tools on how to analyze network delays.
