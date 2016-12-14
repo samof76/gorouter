@@ -34,7 +34,7 @@ user	0m0.005s
 sys	0m0.007s
 ```
 
->Note: [`time`](https://linux.die.net/man/1/time) is a linux utility that can provide the time required to execute the command.
+>Note: [`time`](https://linux.die.net/man/1/time) is a linux utility that can display the time taken to execute the command.
 
 ![Image of req flow landing page]
 (images/req_flow.png)
@@ -51,7 +51,7 @@ If there is a spike in latency there are multiple points where delay can occur
 
 To narrow down the scope of this post lets assume Load Balancer, Client network are good citizens.
 
-#### 1. Delay caused by application
+#### Delay caused by application
 
 Run `cf logs app1` for [live streaming of application logs](https://docs.cloudfoundry.org/adminguide/supporting-websockets.html) 
 
@@ -67,12 +67,11 @@ app1.app_domain.com - [14/12/2016:00:31:32.348 +0000] "GET /hello HTTP/1.1" 200 
 Above information suggests that application is taking long time to process the request. To investigate this line of thought further we recommend adding additional logs in application.
 
 #### Signs to look out for when delay is not caused by gorouter
-
   1. Network delay from specific application or specific instance of an application only.
   1. Network delay from a subset of applications.
     - Check the network between cell(on which delayed applications are deployed) and gorouter.
 
-####1. Delay caused by router.
+#### Delay caused by router.
 
 Let's consider the access log for the request and corresponding application logs
 ```
@@ -99,7 +98,7 @@ Use this information to deduce one of the following
 - Overall network delay between gorouter and cells
 - Gorouter is under heavy load so it takes long time to process requests.
 
-### REMOVE: Obviously there is no other scenario because nothing is ever wrong with gorouter !!
+## REMOVE: Obviously there is no other scenario because nothing is ever wrong with gorouter !!
 
 #### Signs to look out for when delay is caused by gorouter
 
@@ -111,12 +110,13 @@ Use this information to deduce one of the following
     - Latency
     - number of request/sec
 
-## REMOVE: If you are seeing the above behavior, now would be a great time call in the big guns(yes the support team) ;)
+## REMOVE: If you are seeing the above behavior, now would be a great time call in the big guns(yes the support team)
 
 <a name='tips'></a>
 #### Tips/tools on how to analyze network delays.
 - Consider using pingdom app on a Cloudfoundry deployment to monitor the latency and uptime metrics.
 - Monitor latency of all routers(If you are using datadog , do not get the average of all routers. Try to monitor them individually on the same graph).
-- Use `tcpdump` to understand more about network delays of at TCP level.
+- Use `tcpdump` to understand more about network delays of at TCP level. 
 - Use access logs for application.
 - Consider enabling access logs on the Load Balancer(for eg with AWS: http://docs.aws.amazon.com/elasticloadbalancing/latest/classic/access-log-collection.html)
+- If access log is not generated for a request it means that it did not reach router. Access logs are generated for every incoming request. 
