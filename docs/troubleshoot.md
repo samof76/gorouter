@@ -8,9 +8,9 @@ In this post we will discuss the following items
 
 <a name='request_flow'></a>
 ### Request flow from client to backend
-Let's consider a CF deployment with Load Balancer/HAProxy deployed in front of routers. 
+Let's consider a CF deployment with a Load Balancer/HAProxy deployed in front of the routers. 
 
-In the following example we will use `curl` to connect to an application deployed.
+In the following example we will use `curl` to connect to a deployed application.
 
 `time curl -v http://app1.app_domain.com`
 
@@ -37,10 +37,10 @@ sys	0m0.007s
 >Note: [`time`](https://linux.die.net/man/1/time) is a linux utility that can display the time taken to execute the command.
 
 ![Image of req flow landing page]
-(images/req_flow.png)
+(images/request_lifecycle.png)
 
 <a name='components'></a>
-### How to find the point of delay in request flow
+### How to narrow down the cause of the delay
 
 If there is a spike in latency there are multiple points where delay can occur
 
@@ -49,7 +49,7 @@ If there is a spike in latency there are multiple points where delay can occur
 1. Gorouter
 1. Backend (Application/Internal component)
 
-To narrow down the scope of this post lets assume Load Balancer, Client network are good citizens.
+For this post lets assume Load Balancer and Client network are good citizens to focus our discussion.
 
 #### Delay caused by application
 
@@ -74,10 +74,15 @@ Above information suggests that application is taking long time to process the r
 #### Delay caused by router.
 
 Let's consider the access log for the request and corresponding application logs
+
+Access Log Example:
 ```
 app1.app_domain.com - [14/12/2016:00:31:32.348 +0000] "GET /hello HTTP/1.1" 200 0 60 "-" "HTTPClient/1.0 (2.7.1, ruby 2.3.3 (2016-11-21))" "10.0.4.207:20810" "10.0.48.67:61555" x_forwarded_for:"52.3.107.171" x_forwarded_proto:"http" vcap_request_id:"01144146-1e7a-4c77-77ab-49ae3e286fe9" response_time:0.211734 app_id:"13ee085e-bdf5-4a48-aaaf-e854a8a975df" > app_index:"0" x_b3_traceid:"3595985e7c34536a" x_b3_spanid:"3595985e7c34536a" x_b3_parentspanid:"-"
-app1 received request at [14/12/2016:00:32:32.348 +0000]
-app1 finished processing req at [14/12/2016:00:32:32.500 +0000]
+```
+Possible Application Logs:
+```
+app1 received request at [14/12/2016:00:32:32.348 +0000] with "vcap_request_id": "01144146-1e7a-4c77-77ab-49ae3e286fe9"
+app1 finished processing req at [14/12/2016:00:32:32.500 +0000] with "vcap_request_id": "01144146-1e7a-4c77-77ab-49ae3e286fe9"
 ```
 
 Let get a timeline from these logs:
@@ -98,8 +103,6 @@ Use this information to deduce one of the following
 - Overall network delay between gorouter and cells
 - Gorouter is under heavy load so it takes long time to process requests.
 
-## REMOVE: Obviously there is no other scenario because nothing is ever wrong with gorouter !!
-
 #### Signs to look out for when delay is caused by gorouter
 
 1. Routers are under heavy load.
@@ -109,8 +112,6 @@ Use this information to deduce one of the following
     - CPU utilization
     - Latency
     - number of request/sec
-
-## REMOVE: If you are seeing the above behavior, now would be a great time call in the big guns(yes the support team)
 
 <a name='tips'></a>
 #### Tips/tools on how to analyze network delays.
