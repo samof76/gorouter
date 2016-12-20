@@ -118,10 +118,10 @@ func NewProxy(args ProxyArgs) Proxy {
 				}
 				return conn, err
 			},
-			DisableKeepAlives:  false,
-			MaxIdleConns:       200,
-			DisableCompression: true,
-			TLSClientConfig:    args.TLSConfig,
+			DisableKeepAlives:   false,
+			MaxIdleConnsPerHost: 200,
+			DisableCompression:  true,
+			TLSClientConfig:     args.TLSConfig,
 		},
 		secureCookies:              args.SecureCookies,
 		heartbeatOK:                args.HeartbeatOK, // 1->true, 0->false
