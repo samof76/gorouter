@@ -2,7 +2,6 @@
 package fakes
 
 import (
-	"net/http"
 	"sync"
 	"time"
 
@@ -11,40 +10,35 @@ import (
 )
 
 type FakeProxyReporter struct {
-	CaptureBadRequestStub        func(req *http.Request)
-	captureBadRequestMutex       sync.RWMutex
-	captureBadRequestArgsForCall []struct {
-		req *http.Request
-	}
-	CaptureBadGatewayStub        func(req *http.Request)
-	captureBadGatewayMutex       sync.RWMutex
-	captureBadGatewayArgsForCall []struct {
-		req *http.Request
-	}
-	CaptureRoutingRequestStub        func(b *route.Endpoint, req *http.Request)
+	CaptureBadRequestStub            func()
+	captureBadRequestMutex           sync.RWMutex
+	captureBadRequestArgsForCall     []struct{}
+	CaptureBadGatewayStub            func()
+	captureBadGatewayMutex           sync.RWMutex
+	captureBadGatewayArgsForCall     []struct{}
+	CaptureRoutingRequestStub        func(b *route.Endpoint)
 	captureRoutingRequestMutex       sync.RWMutex
 	captureRoutingRequestArgsForCall []struct {
-		b   *route.Endpoint
-		req *http.Request
+		b *route.Endpoint
 	}
-	CaptureRoutingResponseStub        func(b *route.Endpoint, res *http.Response, t time.Time, d time.Duration)
+	CaptureRoutingResponseStub        func(b *route.Endpoint, statusCode int, d time.Duration)
 	captureRoutingResponseMutex       sync.RWMutex
 	captureRoutingResponseArgsForCall []struct {
-		b   *route.Endpoint
-		res *http.Response
-		t   time.Time
-		d   time.Duration
+		b          *route.Endpoint
+		statusCode int
+		d          time.Duration
 	}
+	invocations      map[string][][]interface{}
+	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeProxyReporter) CaptureBadRequest(req *http.Request) {
+func (fake *FakeProxyReporter) CaptureBadRequest() {
 	fake.captureBadRequestMutex.Lock()
-	fake.captureBadRequestArgsForCall = append(fake.captureBadRequestArgsForCall, struct {
-		req *http.Request
-	}{req})
+	fake.captureBadRequestArgsForCall = append(fake.captureBadRequestArgsForCall, struct{}{})
+	fake.recordInvocation("CaptureBadRequest", []interface{}{})
 	fake.captureBadRequestMutex.Unlock()
 	if fake.CaptureBadRequestStub != nil {
-		fake.CaptureBadRequestStub(req)
+		fake.CaptureBadRequestStub()
 	}
 }
 
@@ -54,20 +48,13 @@ func (fake *FakeProxyReporter) CaptureBadRequestCallCount() int {
 	return len(fake.captureBadRequestArgsForCall)
 }
 
-func (fake *FakeProxyReporter) CaptureBadRequestArgsForCall(i int) *http.Request {
-	fake.captureBadRequestMutex.RLock()
-	defer fake.captureBadRequestMutex.RUnlock()
-	return fake.captureBadRequestArgsForCall[i].req
-}
-
-func (fake *FakeProxyReporter) CaptureBadGateway(req *http.Request) {
+func (fake *FakeProxyReporter) CaptureBadGateway() {
 	fake.captureBadGatewayMutex.Lock()
-	fake.captureBadGatewayArgsForCall = append(fake.captureBadGatewayArgsForCall, struct {
-		req *http.Request
-	}{req})
+	fake.captureBadGatewayArgsForCall = append(fake.captureBadGatewayArgsForCall, struct{}{})
+	fake.recordInvocation("CaptureBadGateway", []interface{}{})
 	fake.captureBadGatewayMutex.Unlock()
 	if fake.CaptureBadGatewayStub != nil {
-		fake.CaptureBadGatewayStub(req)
+		fake.CaptureBadGatewayStub()
 	}
 }
 
@@ -77,21 +64,15 @@ func (fake *FakeProxyReporter) CaptureBadGatewayCallCount() int {
 	return len(fake.captureBadGatewayArgsForCall)
 }
 
-func (fake *FakeProxyReporter) CaptureBadGatewayArgsForCall(i int) *http.Request {
-	fake.captureBadGatewayMutex.RLock()
-	defer fake.captureBadGatewayMutex.RUnlock()
-	return fake.captureBadGatewayArgsForCall[i].req
-}
-
-func (fake *FakeProxyReporter) CaptureRoutingRequest(b *route.Endpoint, req *http.Request) {
+func (fake *FakeProxyReporter) CaptureRoutingRequest(b *route.Endpoint) {
 	fake.captureRoutingRequestMutex.Lock()
 	fake.captureRoutingRequestArgsForCall = append(fake.captureRoutingRequestArgsForCall, struct {
-		b   *route.Endpoint
-		req *http.Request
-	}{b, req})
+		b *route.Endpoint
+	}{b})
+	fake.recordInvocation("CaptureRoutingRequest", []interface{}{b})
 	fake.captureRoutingRequestMutex.Unlock()
 	if fake.CaptureRoutingRequestStub != nil {
-		fake.CaptureRoutingRequestStub(b, req)
+		fake.CaptureRoutingRequestStub(b)
 	}
 }
 
@@ -101,23 +82,23 @@ func (fake *FakeProxyReporter) CaptureRoutingRequestCallCount() int {
 	return len(fake.captureRoutingRequestArgsForCall)
 }
 
-func (fake *FakeProxyReporter) CaptureRoutingRequestArgsForCall(i int) (*route.Endpoint, *http.Request) {
+func (fake *FakeProxyReporter) CaptureRoutingRequestArgsForCall(i int) *route.Endpoint {
 	fake.captureRoutingRequestMutex.RLock()
 	defer fake.captureRoutingRequestMutex.RUnlock()
-	return fake.captureRoutingRequestArgsForCall[i].b, fake.captureRoutingRequestArgsForCall[i].req
+	return fake.captureRoutingRequestArgsForCall[i].b
 }
 
-func (fake *FakeProxyReporter) CaptureRoutingResponse(b *route.Endpoint, res *http.Response, t time.Time, d time.Duration) {
+func (fake *FakeProxyReporter) CaptureRoutingResponse(b *route.Endpoint, statusCode int, d time.Duration) {
 	fake.captureRoutingResponseMutex.Lock()
 	fake.captureRoutingResponseArgsForCall = append(fake.captureRoutingResponseArgsForCall, struct {
-		b   *route.Endpoint
-		res *http.Response
-		t   time.Time
-		d   time.Duration
-	}{b, res, t, d})
+		b          *route.Endpoint
+		statusCode int
+		d          time.Duration
+	}{b, statusCode, d})
+	fake.recordInvocation("CaptureRoutingResponse", []interface{}{b, statusCode, d})
 	fake.captureRoutingResponseMutex.Unlock()
 	if fake.CaptureRoutingResponseStub != nil {
-		fake.CaptureRoutingResponseStub(b, res, t, d)
+		fake.CaptureRoutingResponseStub(b, statusCode, d)
 	}
 }
 
@@ -127,10 +108,36 @@ func (fake *FakeProxyReporter) CaptureRoutingResponseCallCount() int {
 	return len(fake.captureRoutingResponseArgsForCall)
 }
 
-func (fake *FakeProxyReporter) CaptureRoutingResponseArgsForCall(i int) (*route.Endpoint, *http.Response, time.Time, time.Duration) {
+func (fake *FakeProxyReporter) CaptureRoutingResponseArgsForCall(i int) (*route.Endpoint, int, time.Duration) {
 	fake.captureRoutingResponseMutex.RLock()
 	defer fake.captureRoutingResponseMutex.RUnlock()
-	return fake.captureRoutingResponseArgsForCall[i].b, fake.captureRoutingResponseArgsForCall[i].res, fake.captureRoutingResponseArgsForCall[i].t, fake.captureRoutingResponseArgsForCall[i].d
+	return fake.captureRoutingResponseArgsForCall[i].b, fake.captureRoutingResponseArgsForCall[i].statusCode, fake.captureRoutingResponseArgsForCall[i].d
+}
+
+func (fake *FakeProxyReporter) Invocations() map[string][][]interface{} {
+	fake.invocationsMutex.RLock()
+	defer fake.invocationsMutex.RUnlock()
+	fake.captureBadRequestMutex.RLock()
+	defer fake.captureBadRequestMutex.RUnlock()
+	fake.captureBadGatewayMutex.RLock()
+	defer fake.captureBadGatewayMutex.RUnlock()
+	fake.captureRoutingRequestMutex.RLock()
+	defer fake.captureRoutingRequestMutex.RUnlock()
+	fake.captureRoutingResponseMutex.RLock()
+	defer fake.captureRoutingResponseMutex.RUnlock()
+	return fake.invocations
+}
+
+func (fake *FakeProxyReporter) recordInvocation(key string, args []interface{}) {
+	fake.invocationsMutex.Lock()
+	defer fake.invocationsMutex.Unlock()
+	if fake.invocations == nil {
+		fake.invocations = map[string][][]interface{}{}
+	}
+	if fake.invocations[key] == nil {
+		fake.invocations[key] = [][]interface{}{}
+	}
+	fake.invocations[key] = append(fake.invocations[key], args)
 }
 
 var _ reporter.ProxyReporter = new(FakeProxyReporter)

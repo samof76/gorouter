@@ -217,7 +217,7 @@ func (p *proxy) ServeHTTP(responseWriter http.ResponseWriter, request *http.Requ
 		afterNext: func(endpoint *route.Endpoint) {
 			if endpoint != nil {
 				accessLog.RouteEndpoint = endpoint
-				p.reporter.CaptureRoutingRequest(endpoint, request)
+				p.reporter.CaptureRoutingRequest(endpoint)
 			}
 		},
 	}
@@ -290,9 +290,13 @@ func (p *proxy) ServeHTTP(responseWriter http.ResponseWriter, request *http.Requ
 		}
 
 		latency := time.Since(accessLog.StartedAt)
-
-		p.reporter.CaptureRoutingResponse(endpoint, rsp, accessLog.StartedAt, latency)
-
+		// Even if response is nil metrics should still be incremented.
+		// resp should be sent to responses.0xx bucket
+		if rsp != nil {
+			p.reporter.CaptureRoutingResponse(endpoint, rsp.StatusCode, latency)
+		} else {
+			p.reporter.CaptureRoutingResponse(endpoint, 0, latency)
+		}
 		if err != nil {
 			handler.HandleBadGateway(err, request)
 			return

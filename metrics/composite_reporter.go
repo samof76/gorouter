@@ -1,7 +1,6 @@
 package metrics
 
 import (
-	"net/http"
 	"time"
 
 	"code.cloudfoundry.org/gorouter/metrics/reporter"
@@ -20,22 +19,22 @@ func NewCompositeReporter(first, second reporter.ProxyReporter) reporter.ProxyRe
 	}
 }
 
-func (c *CompositeReporter) CaptureBadRequest(req *http.Request) {
-	c.first.CaptureBadRequest(req)
-	c.second.CaptureBadRequest(req)
+func (c *CompositeReporter) CaptureBadRequest() {
+	c.first.CaptureBadRequest()
+	c.second.CaptureBadRequest()
 }
 
-func (c *CompositeReporter) CaptureBadGateway(req *http.Request) {
-	c.first.CaptureBadGateway(req)
-	c.second.CaptureBadGateway(req)
+func (c *CompositeReporter) CaptureBadGateway() {
+	c.first.CaptureBadGateway()
+	c.second.CaptureBadGateway()
 }
 
-func (c *CompositeReporter) CaptureRoutingRequest(b *route.Endpoint, req *http.Request) {
-	c.first.CaptureRoutingRequest(b, req)
-	c.second.CaptureRoutingRequest(b, req)
+func (c *CompositeReporter) CaptureRoutingRequest(b *route.Endpoint) {
+	c.first.CaptureRoutingRequest(b)
+	c.second.CaptureRoutingRequest(b)
 }
 
-func (c *CompositeReporter) CaptureRoutingResponse(b *route.Endpoint, res *http.Response, t time.Time, d time.Duration) {
-	c.first.CaptureRoutingResponse(b, res, t, d)
-	c.second.CaptureRoutingResponse(b, res, t, d)
+func (c *CompositeReporter) CaptureRoutingResponse(b *route.Endpoint, statusCode int, d time.Duration) {
+	c.first.CaptureRoutingResponse(b, statusCode, d)
+	c.second.CaptureRoutingResponse(b, statusCode, d)
 }

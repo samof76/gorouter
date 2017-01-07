@@ -3,7 +3,6 @@ package varz
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"sync"
 	"time"
 
@@ -110,11 +109,8 @@ func (x *HttpMetric) CaptureRequest() {
 	x.Rate.Mark(1)
 }
 
-func (x *HttpMetric) CaptureResponse(response *http.Response, duration time.Duration) {
-	var statusCode int
-	if response != nil {
-		statusCode = response.StatusCode / 100
-	}
+func (x *HttpMetric) CaptureResponse(statusCode int, duration time.Duration) {
+	statusCode = statusCode / 100
 
 	switch statusCode {
 	case 2:
@@ -153,7 +149,7 @@ func (x TaggedHttpMetric) CaptureRequest(t string) {
 	x.httpMetric(t).CaptureRequest()
 }
 
-func (x TaggedHttpMetric) CaptureResponse(t string, y *http.Response, z time.Duration) {
+func (x TaggedHttpMetric) CaptureResponse(t string, y int, z time.Duration) {
 	x.httpMetric(t).CaptureResponse(y, z)
 }
 
@@ -162,10 +158,10 @@ type Varz interface {
 
 	ActiveApps() *stats.ActiveApps
 
-	CaptureBadRequest(req *http.Request)
-	CaptureBadGateway(req *http.Request)
-	CaptureRoutingRequest(b *route.Endpoint, req *http.Request)
-	CaptureRoutingResponse(b *route.Endpoint, res *http.Response, startedAt time.Time, d time.Duration)
+	CaptureBadRequest()
+	CaptureBadGateway()
+	CaptureRoutingRequest(b *route.Endpoint)
+	CaptureRoutingResponse(b *route.Endpoint, statusCode int, d time.Duration)
 }
 
 type RealVarz struct {
@@ -227,13 +223,13 @@ func (x *RealVarz) ActiveApps() *stats.ActiveApps {
 	return x.activeApps
 }
 
-func (x *RealVarz) CaptureBadRequest(*http.Request) {
+func (x *RealVarz) CaptureBadRequest() {
 	x.Lock()
 	x.BadRequests++
 	x.Unlock()
 }
 
-func (x *RealVarz) CaptureBadGateway(*http.Request) {
+func (x *RealVarz) CaptureBadGateway() {
 	x.Lock()
 	x.BadGateways++
 	x.Unlock()
@@ -246,7 +242,7 @@ func (x *RealVarz) CaptureAppStats(b *route.Endpoint, t time.Time) {
 	}
 }
 
-func (x *RealVarz) CaptureRoutingRequest(b *route.Endpoint, req *http.Request) {
+func (x *RealVarz) CaptureRoutingRequest(b *route.Endpoint) {
 	x.Lock()
 
 	var t string
@@ -262,7 +258,7 @@ func (x *RealVarz) CaptureRoutingRequest(b *route.Endpoint, req *http.Request) {
 	x.Unlock()
 }
 
-func (x *RealVarz) CaptureRoutingResponse(endpoint *route.Endpoint, response *http.Response, startedAt time.Time, duration time.Duration) {
+func (x *RealVarz) CaptureRoutingResponse(endpoint *route.Endpoint, statusCode int, startedAt time.Time, duration time.Duration) {
 	x.Lock()
 
 	var tags string
@@ -270,7 +266,7 @@ func (x *RealVarz) CaptureRoutingResponse(endpoint *route.Endpoint, response *ht
 
 	tags, ok = endpoint.Tags["component"]
 	if ok {
-		x.varz.Tags.Component.CaptureResponse(tags, response, duration)
+		x.varz.Tags.Component.CaptureResponse(tags, statusCode, duration)
 	}
 
 	x.CaptureAppStats(endpoint, startedAt)

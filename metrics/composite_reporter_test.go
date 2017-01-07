@@ -39,54 +39,46 @@ var _ = Describe("CompositeReporter", func() {
 	})
 
 	It("forwards CaptureBadRequest to both reporters", func() {
-		composite.CaptureBadRequest(req)
+		composite.CaptureBadRequest()
 
 		Expect(fakeReporter1.CaptureBadRequestCallCount()).To(Equal(1))
 		Expect(fakeReporter2.CaptureBadRequestCallCount()).To(Equal(1))
 
-		Expect(fakeReporter1.CaptureBadRequestArgsForCall(0)).To(Equal(req))
-		Expect(fakeReporter2.CaptureBadRequestArgsForCall(0)).To(Equal(req))
 	})
 
 	It("forwards CaptureBadGateway to both reporters", func() {
-		composite.CaptureBadGateway(req)
+		composite.CaptureBadGateway()
 		Expect(fakeReporter1.CaptureBadGatewayCallCount()).To(Equal(1))
 		Expect(fakeReporter2.CaptureBadGatewayCallCount()).To(Equal(1))
 
-		Expect(fakeReporter1.CaptureBadGatewayArgsForCall(0)).To(Equal(req))
-		Expect(fakeReporter2.CaptureBadGatewayArgsForCall(0)).To(Equal(req))
 	})
 
 	It("forwards CaptureRoutingRequest to both reporters", func() {
-		composite.CaptureRoutingRequest(endpoint, req)
+		composite.CaptureRoutingRequest(endpoint)
 		Expect(fakeReporter1.CaptureRoutingRequestCallCount()).To(Equal(1))
 		Expect(fakeReporter2.CaptureRoutingRequestCallCount()).To(Equal(1))
 
-		callEndpoint, callReq := fakeReporter1.CaptureRoutingRequestArgsForCall(0)
+		callEndpoint := fakeReporter1.CaptureRoutingRequestArgsForCall(0)
 		Expect(callEndpoint).To(Equal(endpoint))
-		Expect(callReq).To(Equal(req))
 
-		callEndpoint, callReq = fakeReporter2.CaptureRoutingRequestArgsForCall(0)
+		callEndpoint = fakeReporter2.CaptureRoutingRequestArgsForCall(0)
 		Expect(callEndpoint).To(Equal(endpoint))
-		Expect(callReq).To(Equal(req))
 	})
 
 	It("forwards CaptureRoutingResponse to both reporters", func() {
-		composite.CaptureRoutingResponse(endpoint, response, responseTime, responseDuration)
+		composite.CaptureRoutingResponse(endpoint, response.StatusCode, responseDuration)
 
 		Expect(fakeReporter1.CaptureRoutingResponseCallCount()).To(Equal(1))
 		Expect(fakeReporter2.CaptureRoutingResponseCallCount()).To(Equal(1))
 
-		callEndpoint, callResponse, callTime, callDuration := fakeReporter1.CaptureRoutingResponseArgsForCall(0)
+		callEndpoint, callResponseStatus, callDuration := fakeReporter1.CaptureRoutingResponseArgsForCall(0)
 		Expect(callEndpoint).To(Equal(endpoint))
-		Expect(callResponse).To(Equal(response))
-		Expect(callTime).To(Equal(responseTime))
+		Expect(callResponseStatus).To(Equal(response.StatusCode))
 		Expect(callDuration).To(Equal(responseDuration))
 
-		callEndpoint, callResponse, callTime, callDuration = fakeReporter2.CaptureRoutingResponseArgsForCall(0)
+		callEndpoint, callResponseStatus, callDuration = fakeReporter2.CaptureRoutingResponseArgsForCall(0)
 		Expect(callEndpoint).To(Equal(endpoint))
-		Expect(callResponse).To(Equal(response))
-		Expect(callTime).To(Equal(responseTime))
+		Expect(callResponseStatus).To(Equal(response.StatusCode))
 		Expect(callDuration).To(Equal(responseDuration))
 	})
 })

@@ -1,7 +1,6 @@
 package reporter
 
 import (
-	"net/http"
 	"time"
 
 	"code.cloudfoundry.org/gorouter/route"
@@ -9,10 +8,10 @@ import (
 
 //go:generate counterfeiter -o fakes/fake_reporter.go . ProxyReporter
 type ProxyReporter interface {
-	CaptureBadRequest(req *http.Request)
-	CaptureBadGateway(req *http.Request)
-	CaptureRoutingRequest(b *route.Endpoint, req *http.Request)
-	CaptureRoutingResponse(b *route.Endpoint, res *http.Response, t time.Time, d time.Duration)
+	CaptureBadRequest()
+	CaptureBadGateway()
+	CaptureRoutingRequest(b *route.Endpoint)
+	CaptureRoutingResponse(b *route.Endpoint, statusCode int, d time.Duration)
 }
 
 type ComponentTagged interface {

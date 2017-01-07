@@ -1,8 +1,6 @@
 package metrics
 
 import (
-	"net/http"
-
 	"code.cloudfoundry.org/gorouter/metrics/reporter"
 	"code.cloudfoundry.org/gorouter/route"
 	dropsondeMetrics "github.com/cloudfoundry/dropsonde/metrics"
@@ -19,15 +17,15 @@ func NewMetricsReporter() *MetricsReporter {
 	return &MetricsReporter{}
 }
 
-func (m *MetricsReporter) CaptureBadRequest(req *http.Request) {
+func (m *MetricsReporter) CaptureBadRequest() {
 	dropsondeMetrics.BatchIncrementCounter("rejected_requests")
 }
 
-func (m *MetricsReporter) CaptureBadGateway(req *http.Request) {
+func (m *MetricsReporter) CaptureBadGateway() {
 	dropsondeMetrics.BatchIncrementCounter("bad_gateways")
 }
 
-func (m *MetricsReporter) CaptureRoutingRequest(b *route.Endpoint, req *http.Request) {
+func (m *MetricsReporter) CaptureRoutingRequest(b *route.Endpoint) {
 	dropsondeMetrics.BatchIncrementCounter("total_requests")
 
 	componentName, ok := b.Tags["component"]
@@ -39,8 +37,8 @@ func (m *MetricsReporter) CaptureRoutingRequest(b *route.Endpoint, req *http.Req
 	}
 }
 
-func (m *MetricsReporter) CaptureRoutingResponse(b *route.Endpoint, res *http.Response, t time.Time, d time.Duration) {
-	dropsondeMetrics.BatchIncrementCounter(getResponseCounterName(res))
+func (m *MetricsReporter) CaptureRoutingResponse(b *route.Endpoint, statusCode int, d time.Duration) {
+	dropsondeMetrics.BatchIncrementCounter(getResponseCounterName(statusCode))
 	dropsondeMetrics.BatchIncrementCounter("responses")
 
 	latency := float64(d / time.Millisecond)
@@ -67,12 +65,8 @@ func (c *MetricsReporter) CaptureRegistryMessage(msg reporter.ComponentTagged) {
 	dropsondeMetrics.IncrementCounter("registry_message." + msg.Component())
 }
 
-func getResponseCounterName(res *http.Response) string {
-	var statusCode int
-
-	if res != nil {
-		statusCode = res.StatusCode / 100
-	}
+func getResponseCounterName(statusCode int) string {
+	statusCode = statusCode / 100
 	if statusCode >= 2 && statusCode <= 5 {
 		return fmt.Sprintf("responses.%dxx", statusCode)
 	}
