@@ -14,14 +14,15 @@ import (
 	router_http "code.cloudfoundry.org/gorouter/common/http"
 	"code.cloudfoundry.org/gorouter/common/secure"
 	"code.cloudfoundry.org/gorouter/handlers"
+	"code.cloudfoundry.org/gorouter/logger"
 	"code.cloudfoundry.org/gorouter/metrics/reporter"
 	"code.cloudfoundry.org/gorouter/proxy/handler"
 	"code.cloudfoundry.org/gorouter/proxy/round_tripper"
 	"code.cloudfoundry.org/gorouter/proxy/utils"
 	"code.cloudfoundry.org/gorouter/route"
 	"code.cloudfoundry.org/gorouter/routeservice"
-	"code.cloudfoundry.org/lager"
 	"github.com/cloudfoundry/dropsonde"
+	"github.com/uber-go/zap"
 	"github.com/urfave/negroni"
 )
 
@@ -54,7 +55,7 @@ type ProxyArgs struct {
 	Crypto                     secure.Crypto
 	CryptoPrev                 secure.Crypto
 	ExtraHeadersToLog          *[]string
-	Logger                     lager.Logger
+	Logger                     logger.Logger
 	HealthCheckUserAgent       string
 	HeartbeatOK                *int32
 	EnableZipkin               bool
@@ -82,7 +83,7 @@ func (p *proxyWriterHandler) ServeHTTP(responseWriter http.ResponseWriter, reque
 type proxy struct {
 	ip                         string
 	traceKey                   string
-	logger                     lager.Logger
+	logger                     logger.Logger
 	registry                   LookupRegistry
 	reporter                   reporter.ProxyReporter
 	accessLogger               access_log.AccessLogger
@@ -178,7 +179,7 @@ func (p *proxy) lookup(request *http.Request) *route.Pool {
 		appId, appIndex, err := router_http.ValidateCfAppInstance(appInstanceHeader)
 
 		if err != nil {
-			p.logger.Error("invalid-app-instance-header", err)
+			p.logger.Error("invalid-app-instance-header", zap.Error(err))
 			return nil
 		} else {
 			return p.registry.LookupWithInstance(uri, appId, appIndex)
@@ -193,7 +194,7 @@ func (p *proxy) ServeHTTP(responseWriter http.ResponseWriter, request *http.Requ
 
 	alr := proxyWriter.Context().Value("AccessLogRecord")
 	if alr == nil {
-		p.logger.Error("AccessLogRecord not set on context", errors.New("failed-to-access-LogRecord"))
+		p.logger.Error("AccessLogRecord not set on context", zap.Error(errors.New("failed-to-access-LogRecord")))
 	}
 	accessLog := alr.(*schema.AccessLogRecord)
 

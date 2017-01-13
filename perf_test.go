@@ -6,8 +6,8 @@ import (
 	"code.cloudfoundry.org/gorouter/proxy"
 	"code.cloudfoundry.org/gorouter/registry"
 	"code.cloudfoundry.org/gorouter/route"
+	"code.cloudfoundry.org/gorouter/test_util"
 	"code.cloudfoundry.org/gorouter/varz"
-	"code.cloudfoundry.org/lager/lagertest"
 	"code.cloudfoundry.org/routing-api/models"
 
 	. "github.com/onsi/ginkgo"
@@ -20,7 +20,7 @@ import (
 
 var _ = Describe("AccessLogRecord", func() {
 	Measure("Register", func(b Benchmarker) {
-		logger := lagertest.NewTestLogger("test")
+		logger := test_util.NewTestZapLogger("test")
 		c := config.DefaultConfig()
 		r := registry.NewRouteRegistry(logger, c, new(fakes.FakeRouteRegistryReporter))
 

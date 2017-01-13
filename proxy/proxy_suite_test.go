@@ -9,11 +9,10 @@ import (
 	"code.cloudfoundry.org/gorouter/access_log"
 	"code.cloudfoundry.org/gorouter/common/secure"
 	"code.cloudfoundry.org/gorouter/config"
+	"code.cloudfoundry.org/gorouter/logger"
 	"code.cloudfoundry.org/gorouter/proxy"
 	"code.cloudfoundry.org/gorouter/registry"
 	"code.cloudfoundry.org/gorouter/test_util"
-	"code.cloudfoundry.org/lager"
-	"code.cloudfoundry.org/lager/lagertest"
 	"github.com/cloudfoundry/dropsonde"
 	"github.com/cloudfoundry/dropsonde/emitter/fake"
 
@@ -34,7 +33,7 @@ var (
 	accessLog      access_log.AccessLogger
 	accessLogFile  *test_util.FakeFile
 	crypto         secure.Crypto
-	logger         lager.Logger
+	testLogger     logger.Logger
 	cryptoPrev     secure.Crypto
 	caCertPool     *x509.CertPool
 	recommendHttps bool
@@ -47,7 +46,7 @@ func TestProxy(t *testing.T) {
 }
 
 var _ = BeforeEach(func() {
-	logger = lagertest.NewTestLogger("test")
+	testLogger = test_util.NewTestZapLogger("test")
 	var err error
 
 	crypto, err = secure.NewAesGCM([]byte("ABCDEFGHIJKLMNOP"))
@@ -63,13 +62,13 @@ var _ = BeforeEach(func() {
 
 var _ = JustBeforeEach(func() {
 	var err error
-	r = registry.NewRouteRegistry(logger, conf, new(fakes.FakeRouteRegistryReporter))
+	r = registry.NewRouteRegistry(testLogger, conf, new(fakes.FakeRouteRegistryReporter))
 
 	fakeEmitter := fake.NewFakeEventEmitter("fake")
 	dropsonde.InitializeWithEmitter(fakeEmitter)
 
 	accessLogFile = new(test_util.FakeFile)
-	accessLog = access_log.NewFileAndLoggregatorAccessLogger(logger, "", accessLogFile)
+	accessLog = access_log.NewFileAndLoggregatorAccessLogger(testLogger, "", accessLogFile)
 	go accessLog.Run()
 
 	conf.EnableSSL = true
@@ -85,7 +84,7 @@ var _ = JustBeforeEach(func() {
 		EndpointTimeout:            conf.EndpointTimeout,
 		Ip:                         conf.Ip,
 		TraceKey:                   conf.TraceKey,
-		Logger:                     logger,
+		Logger:                     testLogger,
 		Registry:                   r,
 		Reporter:                   fakeReporter,
 		AccessLogger:               accessLog,

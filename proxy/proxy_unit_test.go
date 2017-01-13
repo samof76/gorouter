@@ -7,13 +7,13 @@ import (
 	"time"
 
 	fakelogger "code.cloudfoundry.org/gorouter/access_log/fakes"
+	"code.cloudfoundry.org/gorouter/logger"
 	"code.cloudfoundry.org/gorouter/metrics/reporter/fakes"
 	"code.cloudfoundry.org/gorouter/proxy"
 	"code.cloudfoundry.org/gorouter/proxy/test_helpers"
 	"code.cloudfoundry.org/gorouter/registry"
 	"code.cloudfoundry.org/gorouter/route"
 	"code.cloudfoundry.org/gorouter/test_util"
-	"code.cloudfoundry.org/lager/lagertest"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gbytes"
@@ -23,7 +23,7 @@ var _ = Describe("Proxy Unit tests", func() {
 	var (
 		proxyObj         proxy.Proxy
 		fakeAccessLogger *fakelogger.FakeAccessLogger
-		logger           *lagertest.TestLogger
+		logger           logger.Logger
 	)
 
 	Context("ServeHTTP", func() {
@@ -35,7 +35,7 @@ var _ = Describe("Proxy Unit tests", func() {
 
 			fakeAccessLogger = &fakelogger.FakeAccessLogger{}
 
-			logger = lagertest.NewTestLogger("test")
+			logger = test_util.NewTestZapLogger("test")
 			r = registry.NewRouteRegistry(logger, conf, new(fakes.FakeRouteRegistryReporter))
 
 			proxyObj = proxy.NewProxy(proxy.ProxyArgs{
@@ -66,8 +66,8 @@ var _ = Describe("Proxy Unit tests", func() {
 
 				proxyObj.ServeHTTP(resp, req)
 
-				Eventually(logger).Should(Say("error"))
 				Eventually(logger).Should(Say("route-endpoint"))
+				Eventually(logger).Should(Say("error"))
 			})
 		})
 
