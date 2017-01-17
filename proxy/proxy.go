@@ -13,6 +13,7 @@ import (
 	"code.cloudfoundry.org/gorouter/access_log/schema"
 	router_http "code.cloudfoundry.org/gorouter/common/http"
 	"code.cloudfoundry.org/gorouter/common/secure"
+	"code.cloudfoundry.org/gorouter/config"
 	"code.cloudfoundry.org/gorouter/handlers"
 	"code.cloudfoundry.org/gorouter/metrics/reporter"
 	"code.cloudfoundry.org/gorouter/proxy/handler"
@@ -60,6 +61,7 @@ type ProxyArgs struct {
 	EnableZipkin               bool
 	ForceForwardedProtoHttps   bool
 	DefaultLoadBalance         string
+	Config                     *config.Config
 }
 
 type proxyHandler struct {
@@ -118,9 +120,11 @@ func NewProxy(args ProxyArgs) Proxy {
 				}
 				return conn, err
 			},
-			DisableKeepAlives:  true,
-			DisableCompression: true,
-			TLSClientConfig:    args.TLSConfig,
+			DisableKeepAlives:   args.Config.DisableKeepAlives,
+			MaxIdleConns:        args.Config.MaxIdleConns,
+			MaxIdleConnsPerHost: args.Config.MaxIdleConnsPerHost,
+			DisableCompression:  true,
+			TLSClientConfig:     args.TLSConfig,
 		},
 		secureCookies:              args.SecureCookies,
 		heartbeatOK:                args.HeartbeatOK, // 1->true, 0->false
