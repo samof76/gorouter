@@ -177,6 +177,10 @@ var defaultConfig = Config{
 
 	HealthCheckUserAgent: "HTTP-Monitor/1.1",
 	LoadBalance:          LOAD_BALANCE_RR,
+
+	DisableKeepAlives:   false,
+	MaxIdleConns:        100,
+	MaxIdleConnsPerHost: 2,
 }
 
 func DefaultConfig() *Config {
